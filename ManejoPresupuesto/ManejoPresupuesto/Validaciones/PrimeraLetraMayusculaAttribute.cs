@@ -5,6 +5,8 @@ namespace ManejoPresupuesto.Validaciones
 {
     public class PrimeraLetraMayusculaAttribute : ValidationAttribute
     {
+
+        ///Validaciones por Atributo, para que se puedan llamar en cualquier modelo
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
             if (value == null || string.IsNullOrEmpty(value.ToString())) 

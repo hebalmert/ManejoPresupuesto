@@ -19,6 +19,7 @@ namespace ManejoPresupuesto.Models
         public int Orden { get; set; }
 
 
+        //Personalizacion de Validaciones por Modelo
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) 
         {
             if (Nombre != null && Nombre.Length > 0)
