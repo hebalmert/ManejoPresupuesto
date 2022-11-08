@@ -4,14 +4,14 @@ using System.Runtime.InteropServices;
 
 namespace ManejoPresupuesto.Models
 {
-    public class TipoCuenta : IValidatableObject
+    public class TipoCuenta /*: IValidatableObject*/  //se activa esto para poder implemntar una Validacion por Modelo
     {
         public int Id { get; set; }
 
         [Required(ErrorMessage = "El Campo {0} es requerido")]
         [StringLength(maximumLength: 50, MinimumLength = 3, ErrorMessage = "La Longitud del campo {0} debe estar entre {2} y {1}")]
         [Display(Name = "Nombre del Tipo Cuenta")]
-        //[PrimeraLetraMayuscula]
+        [PrimeraLetraMayuscula]  //Validacicion por Atributo
         public string? Nombre { get; set; }
 
         public int? UsuarioId { get; set; }
@@ -19,25 +19,25 @@ namespace ManejoPresupuesto.Models
         public int Orden { get; set; }
 
 
-        //Personalizacion de Validaciones por Modelo
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) 
-        {
-            if (Nombre != null && Nombre.Length > 0)
-            { 
-                var primeraLeta = Nombre[0].ToString();
-                if (primeraLeta != primeraLeta.ToUpper())
-                {
-                    //Si se coloca de esta manera, el error se aplica solo para un campo 
-                    //especifico.
-                    yield return new ValidationResult("La Primera Letra debe ser Mayuscula", 
-                        new[] { nameof(Nombre) });
+        ////Personalizacion de Validaciones por Modelo
+        //public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) 
+        //{
+        //    if (Nombre != null && Nombre.Length > 0)
+        //    { 
+        //        var primeraLeta = Nombre[0].ToString();
+        //        if (primeraLeta != primeraLeta.ToUpper())
+        //        {
+        //            //Si se coloca de esta manera, el error se aplica solo para un campo 
+        //            //especifico.
+        //            yield return new ValidationResult("La Primera Letra debe ser Mayuscula", 
+        //                new[] { nameof(Nombre) });
 
-                    //Si se coloca de esta manera, el error se considera para todos los campos
-                    //Es decir, aplica para todo el modelo
-                    //yield return new ValidationResult("La Primera Letra debe ser Mayuscula");
-                }
-            }
-        }
+        //            //Si se coloca de esta manera, el error se considera para todos los campos
+        //            //Es decir, aplica para todo el modelo
+        //            yield return new ValidationResult("La Primera Letra debe ser Mayuscula");
+        //        }
+        //    }
+        //}
 
 
         /* Pruebas de Otras Validaciones por Defecto */
