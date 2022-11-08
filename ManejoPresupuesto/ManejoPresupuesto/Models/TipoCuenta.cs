@@ -27,8 +27,14 @@ namespace ManejoPresupuesto.Models
                 var primeraLeta = Nombre[0].ToString();
                 if (primeraLeta != primeraLeta.ToUpper())
                 {
+                    //Si se coloca de esta manera, el error se aplica solo para un campo 
+                    //especifico.
                     yield return new ValidationResult("La Primera Letra debe ser Mayuscula", 
                         new[] { nameof(Nombre) });
+
+                    //Si se coloca de esta manera, el error se considera para todos los campos
+                    //Es decir, aplica para todo el modelo
+                    //yield return new ValidationResult("La Primera Letra debe ser Mayuscula");
                 }
             }
         }
