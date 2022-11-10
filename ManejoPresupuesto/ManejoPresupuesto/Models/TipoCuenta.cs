@@ -1,4 +1,5 @@
 ﻿using ManejoPresupuesto.Validaciones;
+using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.InteropServices;
 
@@ -12,9 +13,11 @@ namespace ManejoPresupuesto.Models
         [StringLength(maximumLength: 50, MinimumLength = 3, ErrorMessage = "La Longitud del campo {0} debe estar entre {2} y {1}")]
         [Display(Name = "Nombre del Tipo Cuenta")]
         [PrimeraLetraMayuscula]  //Validacicion por Atributo
-        public string? Nombre { get; set; }
+        [Remote(action: "VerificarExiste", controller:"TiposCuentas")]//creando una validacion desde el Controlador
+                                                                      //llama el metodo en el controlados y devuelve un Json
+        public string Nombre { get; set; }
 
-        public int? UsuarioId { get; set; }
+        public int UsuarioId { get; set; }
 
         public int Orden { get; set; }
 
