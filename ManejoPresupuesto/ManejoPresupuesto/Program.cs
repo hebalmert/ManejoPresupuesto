@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddTransient<IRepositorioTiposCuentas, RepositorioTiposCuentas>();
 builder.Services.AddTransient<IRepositorioCuentas, RepositorioCuentas>();
+builder.Services.AddTransient<IRepositorioCategoria, RepositorioCategoria>();
+
 builder.Services.AddTransient<IServiciosUsuarios, ServiciosUsuarios>();
 
 //vamos a configurar AutoMapper
