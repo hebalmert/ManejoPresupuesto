@@ -1,4 +1,5 @@
-﻿using ManejoPresupuesto.Models;
+﻿using AutoMapper;
+using ManejoPresupuesto.Models;
 using ManejoPresupuesto.Servicios;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,16 +14,19 @@ namespace ManejoPresupuesto.Controllers
         private readonly IRepositorioCuentas _repositorioCuentas;
         private readonly IRepositorioCategoria _repositorioCategoria;
         private readonly IRepositorioTransacciones _repositorioTransacciones;
+        private readonly IMapper _mapper;
 
         public TransaccionesController(IServiciosUsuarios serviciosUsuarios,
             IRepositorioCuentas repositorioCuentas,
             IRepositorioCategoria repositorioCategoria,
-            IRepositorioTransacciones repositorioTransacciones)
+            IRepositorioTransacciones repositorioTransacciones,
+            IMapper mapper)
         {
             _serviciosUsuarios = serviciosUsuarios;
             _repositorioCuentas = repositorioCuentas;
             _repositorioCategoria = repositorioCategoria;
             _repositorioTransacciones = repositorioTransacciones;
+            _mapper = mapper;
         }
 
         public IActionResult Index()
@@ -74,6 +78,82 @@ namespace ManejoPresupuesto.Controllers
             await _repositorioTransacciones.Crear(modelo);
             return RedirectToAction("Index");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Editar(int id)
+        {
+            var usuarioid = _serviciosUsuarios.ObtenerUsuario();
+
+            var transacciones = await _repositorioTransacciones.ObtenerPorId(id, usuarioid);
+            if (transacciones is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+            var modelo = _mapper.Map<TransaccionActualizacionViewModel>(transacciones);
+
+            modelo.MontoAnterior = modelo.Monto;
+            if (modelo.TipoOperacionId == TipoOperacion.Gasto)
+            { 
+                modelo.MontoAnterior = modelo.Monto * -1;
+            }
+
+            modelo.CuentaAnteriorId = transacciones.CuentaId;
+            modelo.Categorias = await ObtenerCategorias(usuarioid, transacciones.TipoOperacionId);
+            modelo.Cuentas = await ObtenetCuentas(usuarioid);
+
+
+            return View(modelo);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> Editar(TransaccionActualizacionViewModel modelo)
+        {
+            var usuarioid = _serviciosUsuarios.ObtenerUsuario();
+            if (!ModelState.IsValid)
+            {
+                modelo.Cuentas = await ObtenetCuentas(usuarioid);
+                modelo.Categorias = await ObtenerCategorias(usuarioid, modelo.TipoOperacionId);
+                return View(modelo);
+            }
+
+            var cuenta = await _repositorioCuentas.ObtenerPorId(modelo.CuentaId, usuarioid);
+            if (cuenta is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+
+            var categoria = await _repositorioCategoria.ObtnerPorId(modelo.CategoriaId, usuarioid);
+            if (categoria is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+
+            var transaccion = _mapper.Map<Transaccion>(modelo);
+            if (modelo.TipoOperacionId == TipoOperacion.Gasto)
+            {
+                transaccion.Monto *= -1;
+            }
+
+            await _repositorioTransacciones.Actualizar(transaccion, modelo.MontoAnterior, modelo.CuentaAnteriorId);
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Borrar(int id)
+        {
+            var usuarioid = _serviciosUsuarios.ObtenerUsuario();
+            var transaccion = await _repositorioTransacciones.ObtenerPorId(id, usuarioid);
+            if (transaccion is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+            await _repositorioTransacciones.Borrar(id);
+            return RedirectToAction("Index");
+        }
+
+
 
         public async Task<IEnumerable<SelectListItem>> ObtenetCuentas(int usuarioId)
         {

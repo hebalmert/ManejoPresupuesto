@@ -6,7 +6,10 @@ namespace ManejoPresupuesto.Servicios
 {
     public interface IRepositorioTransacciones
     {
+        Task Actualizar(Transaccion transaccion, decimal montoAnterior, int cuentaAnterior);
+        Task Borrar(int id);
         Task Crear(Transaccion transaccion);
+        Task<Transaccion> ObtenerPorId(int id, int usuarioId);
     }
 
 
@@ -38,5 +41,44 @@ namespace ManejoPresupuesto.Servicios
             transaccion.Id = id;
         }
 
+
+        public async Task Actualizar(Transaccion transaccion, decimal montoAnterior, int cuentaAnteriorId)
+        {
+            using var connection = new SqlConnection(connectionString);
+            await connection.ExecuteAsync("Transacciones_Actualizar",
+                new 
+                { 
+                    transaccion.Id,
+                    transaccion.FechaTransaccion,
+                    transaccion.Monto,
+                    transaccion.CategoriaId,
+                    transaccion.CuentaId,   
+                    transaccion.Nota,
+                    montoAnterior,
+                    cuentaAnteriorId
+                }, commandType: System.Data.CommandType.StoredProcedure);
+        }
+
+        public async Task<Transaccion> ObtenerPorId(int id, int usuarioId)
+        {
+            using var connection = new SqlConnection(connectionString);
+            return await connection.QueryFirstOrDefaultAsync<Transaccion>
+                ($@"Select Transacciones.*, cat.TipoOperacionId 
+                 from Transacciones
+                 inner join Categorias cat
+                 on cat.Id = Transacciones.CategoriaId
+                 Where Transacciones.Id = @Id and Transacciones.UsuarioId = @UsuarioId",
+                 new { id , usuarioId});
+        }
+
+        public async Task Borrar(int id)
+        {
+            using var connection = new SqlConnection(connectionString);
+            await connection.ExecuteAsync("Transacciones_Borrar", new 
+            { 
+                id
+            },
+            commandType: System.Data.CommandType.StoredProcedure);
+        }
     }
 }
