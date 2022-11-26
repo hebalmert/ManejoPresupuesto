@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Build.ObjectModelRemoting;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace ManejoPresupuesto.Controllers
 {
@@ -14,16 +15,72 @@ namespace ManejoPresupuesto.Controllers
         private readonly IServiciosUsuarios _serviciosUsuarios;
         private readonly IRepositorioCuentas _repositorioCuentas;
         private readonly IMapper _mapper;
+        private readonly IRepositorioTransacciones _repositorioTransacciones;
 
         public CuentasController(IRepositorioTiposCuentas repositorioTiposCuentas,
             IServiciosUsuarios serviciosUsuarios,
             IRepositorioCuentas repositorioCuentas,
-            IMapper mapper)
+            IMapper mapper,
+            IRepositorioTransacciones repositorioTransacciones)
         {
             _repositorioTiposCuentas = repositorioTiposCuentas;
             _serviciosUsuarios = serviciosUsuarios;
             _repositorioCuentas = repositorioCuentas;
             _mapper = mapper;
+            _repositorioTransacciones = repositorioTransacciones;
+        }
+
+        public async Task<IActionResult> Detalle(int id, int mes, int ano)
+        {
+            var usuarioId = _serviciosUsuarios.ObtenerUsuario();
+            var cuenta = await _repositorioCuentas.ObtenerPorId(id, usuarioId);
+            if (cuenta is null)
+            {
+                return RedirectToAction("NoEncontrado", "Home");
+            }
+
+            DateTime FechaInicio;
+            DateTime FechaFin;
+
+            if (mes <= 0 || mes > 12 || ano <= 1900)
+            {
+                var hoy = DateTime.Today;
+                FechaInicio = new DateTime(hoy.Year, hoy.Month, 1);
+            }
+            else
+            {
+                FechaInicio = new DateTime(ano, mes, 1);
+            }
+
+            FechaFin = FechaInicio.AddMonths(1).AddDays(-1);
+
+            var obtenerTransaccionesPorCuenta = new ObtenerTransaccionesPorCuenta()
+            {
+                CuentaId = id,
+                UsuarioId = usuarioId,
+                FechaInicio = FechaInicio,
+                FechaFin = FechaFin
+            };
+
+            //var transacciones = await _repositorioTransacciones
+            //    .ObtenerPorCuenta(obtenerTransaccionesPorCuenta);
+
+            var modelo = new ReporteTransaccionesDetalladas();
+            ViewBag.Cuenta = cuenta.Nombre;
+
+            //var transaccionesPorFecha = transacciones.OrderByDescending(x => x.FechaTransaccion)
+            //    .GroupBy(x => x.FechaTransaccion)
+            //    .Select(grupo => new ReporteTransaccionesDetalladas.TransaccionesPorFecha()
+            //    {
+            //        FechaTransaccion = grupo.Key,
+            //        Transaccions = grupo.AsEnumerable()
+            //    });
+
+            //modelo.TransaccionesAgrupadas = transaccionesPorFecha;
+            //modelo.FechaInicio = FechaInicio;
+            //modelo.FechaFin = FechaFin;
+
+            return View(modelo);
         }
 
 
@@ -36,12 +93,12 @@ namespace ManejoPresupuesto.Controllers
             var modelo = cuentasConTipoCuenta
                 .GroupBy(x => x.TipoCuenta)
                 .Select(grupo => new IndeceCuentasViewModel
-                { 
+                {
                     TipoCuenta = grupo.Key,
                     Cuentas = grupo.AsEnumerable()
                 }).ToList();
 
-            return View(modelo);  
+            return View(modelo);
         }
 
 
@@ -52,7 +109,7 @@ namespace ManejoPresupuesto.Controllers
             var usuarioId = _serviciosUsuarios.ObtenerUsuario();
             CuentaCreacionViewModel modelo = new();
             //llamamos el Enumerable<SelectListItem> para llenarlo
-           modelo.TiposCuentas = await ObtenerTiposCuentas(usuarioId); 
+            modelo.TiposCuentas = await ObtenerTiposCuentas(usuarioId);
 
             return View(modelo);
         }
@@ -62,7 +119,7 @@ namespace ManejoPresupuesto.Controllers
         {
             var usuarioid = _serviciosUsuarios.ObtenerUsuario();
             var tipocuenta = await _repositorioTiposCuentas.ObtenerPorId(cuenta.TiposCuentasId, usuarioid);
-            if (tipocuenta is null) 
+            if (tipocuenta is null)
             {
                 return RedirectToAction("NoEncontrado", "Home");
             }
@@ -78,7 +135,7 @@ namespace ManejoPresupuesto.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Editar(int id) 
+        public async Task<IActionResult> Editar(int id)
         {
             var usuarioid = _serviciosUsuarios.ObtenerUsuario();
             var cuenta = await _repositorioCuentas.ObtenerPorId(id, usuarioid);

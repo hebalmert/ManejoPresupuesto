@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using AspNetCore;
+using Dapper;
 using ManejoPresupuesto.Models;
 using Microsoft.Data.SqlClient;
 
@@ -70,6 +71,23 @@ namespace ManejoPresupuesto.Servicios
                  Where Transacciones.Id = @Id and Transacciones.UsuarioId = @UsuarioId",
                  new { id , usuarioId});
         }
+
+        public async Task<IEnumerable<Transaccion>> ObtenerPorCuenta(ObtenerTransaccionesPorCuenta modelo)
+        {
+            using var connection = new SqlConnection(connectionString);
+            return await connection.QueryAsync<Transaccion>
+                ($@"Select  t.Id, t.Monto, t.FechaTransaccion, C.Nombre as Categoria,
+                 cu.Nombre as Cuenta, c.TipoOperacionId
+                 from Transacciones t
+                 inner join Categoria c
+                 on c.Id = t.CategoriaId
+                 inner join Cuentas cu
+                 on cu.Id = t.CuentaId
+                 Where t.CuentaId = @CuentaId and t.UsuarioId = @UsuarioId
+                 and FechaTransaccion Between @FechaInicio and @FechaFin", modelo);
+        }
+
+
 
         public async Task Borrar(int id)
         {
